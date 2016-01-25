@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html ng-app='chat'>
+<head>
+<meta charset="utf8" />
+<title>┈━═☆BAT 聊天室 ≧ω≦</title>
+</head>
+<style type="text/css">
+	#msg_input{width: 100%}
+</style>
+<body ng-controller="ChatController">
+	<!--login-->
+	<div ng-show='!socket.open'>
+		请输入昵称: <input type="test" ng-model="user.name"/>
+		<br/>
+		<button ng-click="submit()">登录</button>	</div>
+	<!--chat-->
+	<div ng-show='socket.open'>
+		<div>
+			<h3>{{newUser}}进入聊天室</h3>
+			<hr/>
+			<ol>
+				<li ng-repeat='item in msg'>
+					{{item.name}} 说 :{{item.content}} -- {{item.time}}
+				</li>
+			</ol>
+			<hr/>
+			<p>在线用户</p>
+			<ol>
+				<li ng-repeat='user in user_list'>{{user}}</li>
+			</ol>
+			<hr/>
+		</div>
+		<!--sed msg-->
+		<div>
+			{{user.name}} 对 
+			<select>
+				<option ng-repeat="user in user_list " value="{{user.id}}">{{user.name}}</option>
+			</select>
+			说: 
+			<input type="color" ng-model="msg.name"/>
+			<br/>
+			<input type="text" ng-model="msg.content" id="msg_input"/>
+			<button ng-click="send()">发送</button>
+		</div>
+	</div>
+	
+</body>
+<script type="text/javascript" src="http://cdn.bootcss.com/angular.js/1.4.0/angular.min.js"></script>
+<script type="text/javascript">
+	var app = angular.module('chat',[]);
+	app.controller('ChatController',['$scope',function($scope){
+
+		$scope.title = "test";
+		$scope.buttonText = "登录";
+
+		$scope.user = {'name':''};
+
+		$scope.socket = {
+			'open':false
+		}
+		$scope.newUser = '';
+		$scope.user_list = [];
+		$scope.submit = function(){
+
+			var socket = new WebSocket('ws://localhost:9503'); 
+			$scope.buttonText="连接中...";
+			socket.onopen = function(event) { 
+
+				$scope.socket.open = true;
+				$scope.$apply()
+
+				// 发送一个初始化消息
+				socket.send(JSON.stringify({'login':$scope.user.name})); 
+				// 监听消息
+				socket.onmessage = function(event) { 
+					var data = JSON.parse(event.data)
+					 console.log(data);
+					switch (Object.keys(data)[0]){
+						case "new_user":							
+							$scope.newUser = data.new_user.name;
+							$scope.user_list = data.user_list;
+							$scope.$apply();
+							break;
+						case 'new_msg':
+							break;
+					}
+			
+				};  
+				// 监听Socket的关闭
+				socket.onclose = function(event) { 
+					console.log('Client notified socket has closed',event); 
+				};  
+				// 关闭Socket.... 
+				//	socket.close() 
+				};
+		}
+
+		$scope.send = function(){
+			socket.send(JSON.stringify({'sendMsg':$scope.user})); 
+		}
+	}])
+</script>
+</html>
+
