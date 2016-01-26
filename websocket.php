@@ -1,45 +1,68 @@
 <?php
-$serv = new swoole_websocket_server("127.0.0.1", 9503);
+try{
+	$serv	= new swoole_websocket_server("127.0.0.1", 9503);
+	$redis	= new Redis();
+	$redis->connect('127.0.0.1',6379);
 
-static $user = [];
 
-$serv->on('Open', function($server, $req) {
+	$serv->on('Open', function($server, $req) {
 		echo "connection open: ".$req->fd."\n";
-		});
+	});
 
-$serv->on('Message', function($server, $frame) {
-		global $user;
-		global $serv;
-		global $i;
-		$data = json_decode($frame->data,true);
-			
-		print_r($user);
+	$serv->on('Message', function($server, $frame) {
+			global $redis;
+			global $serv;
+			$request = json_decode($frame->data,true);
 
-		switch(array_keys($data)[0]){
-			case 'login':
-				$user[$frame->fd] = current($data);
-				$new_user = [
-					'new_user' => ['name'=>$data['login'],'id'=>$frame->fd],
-					'user_list' => $user
-				];
-				$json_new_user  = json_encode($new_user);
-				//通知新用户登录
-				foreach($serv->connections as $fd){
-					echo $fd."\n";
-					$serv->push($fd, $json_new_user);
-				}
+			print_r($request);
 
-				break;
-			case 'sendMsg':
-				break;
-		}
-		});
+			$cmd  = $request['cmd'];
+			$data = $request['data'];
 
-$serv->on('Close', function($server, $fd) {
-		global $user;
-		//unset($user[$fd]);
-		echo "connection close: ".$fd."\n";
-		});
+			switch($cmd){
+				case 'login':
+					$uid = 'uid_'.$frame->fd;
+					$redis->lpush('uid_list',$uid);
+					$username = $data['username'];
+					$redis->set($uid,$username);
+					
+					$user_list = get_online_users($redis);
+					
+					$response = [
+						'cmd' =>'login',
+						'data'=> [
+							'new_user'  => $username,
+							'user_list' => $user_list
+						]
+					];
+					$response_data = json_encode($response_data);
+					//通知新用户登录
+					foreach($serv->connections as $fd){
+						$serv->push($fd, $response_data);
+					}
 
-$serv->start();
+					break;
+				case 'send_msg':
+					break;
+				case 'set_config':
+					break;
+			}
+			});
+
+	$serv->on('Close', function($server, $fd) {
+	//		global $user;
+			//unset($user[$fd]);
+			echo "connection close: ".$fd."\n";
+			});
+
+	$serv->start();
+
+	function get_online_users(&$redis){
+		$user_id_list = $redis->lRange('uid_list',0,-1);	
+		$user_list = $redis->$redis->getMultiple($user_id_list);
+		return $user_list;
+	}
+} catch (Exception $e){
+	print_r($e);
+}
 

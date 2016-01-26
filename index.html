@@ -1,66 +1,199 @@
 <!DOCTYPE html>
-<html ng-app='chat'>
+<html ng-app='chat'  ng-controller="ChatController">
 <head>
 <meta charset="utf8" />
-<title>┈━═☆BAT 聊天室 ≧ω≦</title>
+<title>{{config.title}}</title>
+<link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="http://cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css">
 </head>
 <style type="text/css">
-	#msg_input{width: 100%}
+	body{
+		background: url({{config.bg_img}});
+	}
+	#msg_content{margin-top:10px; opacity: .8;}
+	.form-signin{    
+		max-width: 330px;
+	    padding: 15px;
+	    margin: 0 auto;
+	    margin-top:100px;
+
+	}
+	.welcome{
+		margin:20px 0;
+	}
+	.notice{
+		padding:10px 0;
+	}
+	.col-md-10{
+		border-left: 1px solid #ccc;
+		padding-left:50px;
+	}
+	.left_user_list p{
+		margin-bottom: 15px;
+	}
+	.btn-send{
+		margin-top:-15px;
+	}
+	.user_name{
+		 width: 100px;
+		 overflow: hidden;
+    	 white-space: nowrap;
+	}
+	li{
+		line-height: 25px;
+		 display: flex;
+	}
+	.mt_100{
+		margin-top:100px;
+	}
+	.mt_80{
+		margin-top:80px;
+	}
+	.w7{
+		width: 70%;
+	}
+	details{
+		opacity: .8;
+	}
+	body{
+		/*background: #000;*/
+	}
 </style>
-<body ng-controller="ChatController">
-	<!--login-->
-	<div ng-show='!socket.open'>
-		请输入昵称: <input type="test" ng-model="user.name"/>
-		<br/>
-		<button ng-click="submit()">登录</button>	</div>
+<body>
+
+
+  	<div class="container">
+
+  	<!--login-->
+      <form class="form-signin"  ng-show='!socket.open'>
+        <input type="email" ng-model="user.name" class="form-control" placeholder="请输入昵称:" required autofocus>
+        <br/>
+        <button class="btn btn-primary center-block " type="submit" ng-click="submit()">login</button>
+      </form>
+  
 	<!--chat-->
 	<div ng-show='socket.open'>
-		<div>
-			<h3>{{newUser}}进入聊天室</h3>
-			<hr/>
-			<ol>
-				<li ng-repeat='item in msg'>
-					{{item.name}} 说 :{{item.content}} -- {{item.time}}
-				</li>
-			</ol>
-			<hr/>
-			<p>在线用户</p>
-			<ol>
-				<li ng-repeat='user in user_list'>{{user}}</li>
-			</ol>
-			<hr/>
-		</div>
-		<!--sed msg-->
-		<div>
-			{{user.name}} 对 
-			<select>
-				<option ng-repeat="user in user_list " value="{{user.id}}">{{user.name}}</option>
-			</select>
-			说: 
-			<input type="color" ng-model="msg.name"/>
+		 <p class="welcome">
+	    	<marquee>欢迎进入{{config.title}}</marquee>
+		</p>
+		<p class="notice">
+			<i class="fa fa-bullhorn"> :</i> <span class="text-success">{{new_user}}</span> 进入聊天室
+		</p>
+		<div class="row">
+	  		<div class="col-md-2 left_user_list" >
+	  			<p><i class="fa fa-user"></i> 在线用户({{3}})</p>
+	  			<ul>
+	  				<li>胡架构</li>
+	  				<li>王铁华</li>
+	  				<li>小贺</li>
+	  				<li ng-repeat='user in user_list'>{{user}}</li>
+	  			</ul>
+	  		</div>
+	    	<div class="col-md-10">
+	    		<div>
+					<h4><i class="fa fa-commenting-o"></i> 公屏聊天</h4>
+					<hr/>
+					<ul>
+						<li ng-repeat='item in msg'>
+							{{item.name}} 说 :{{item.content}} -- {{item.time}}
+						</li>
+						<li>
+										<span class="user_name">王铁华王铁华王铁华</span>  对&nbsp;&nbsp;所有人&nbsp;&nbsp;说 :&nbsp;&nbsp;<span style="color:red;font-size:32px;">我特么不是人</span>
+						</li>
+						<li>
+							<span class="user_name">王铁华王铁华王铁华</span>  对&nbsp;&nbsp;所有人&nbsp;&nbsp;说 :&nbsp;&nbsp;<span style="color:red;font-size:32px;">我特么不是人</span>
+						</li>
+						<li>
+							<span class="user_name">王铁华</span>  对&nbsp;&nbsp;所有人&nbsp;&nbsp;说 :&nbsp;&nbsp;我特么不是人
+						</li>
+					</ul>
+					
+				</div>
+				<div class="mt_100">
+					<h4><i class="fa fa-comment-o"></i> 私聊</h4>
+					<hr/>
+					<ul>
+						<li ng-repeat='item in msg'>
+							{{item.name}} 说 :{{item.content}} -- {{item.time}}
+						</li>
+						<li>
+							王铁华 对 所有人 说 :我特么不是人
+						</li>
+						<li>
+							王铁华 对 所有人 说 :我特么不是人
+						</li>
+						<li>
+							王铁华 对 所有人 说 :我特么不是人
+						</li>
+					</ul>
+				</div>
+				<!--sed msg-->
+				<div class="mt_80">
+				<form>
+					
+					<hr/>
+					对 
+					<select>
+						<option ng-repeat="user in user_list " value="{{user.id}}">{{user.name}}</option>
+						<option>All</option>
+						<option>王铁华</option>
+						<option>小贺</option>
+					</select>
+					<input type="color" ng-model="msg.name"/>
+					<select>
+						<option>字号</option>
+						<option>14</option>
+						<option>20</option>
+						<option>26</option>
+						<option>32</option>
+					</select>
+					<textarea type="text" ng-model="msg.content" id="msg_content" class="form-control" placeholder="请输入聊天内容" required/>
+					</textarea>
+					<br/>
+					<button ng-click="send()" class="btn btn-default center-block btn-send">发送</button>
+				</form>
+			</div>
+    	</div>
+    </div>
+    <div class="mt_80">
+    	<details>
+			<summary><i class="fa fa-cogs"></i></summary>
 			<br/>
-			<input type="text" ng-model="msg.content" id="msg_input"/>
-			<button ng-click="send()">发送</button>
-		</div>
+			聊天室背景图 <input type="text" class="w7" ng-model="bg_img">
+			<button>保存</button>
+		</details>
+    </div>
 	</div>
-	
+    </div>
 </body>
 <script type="text/javascript" src="http://cdn.bootcss.com/angular.js/1.4.0/angular.min.js"></script>
 <script type="text/javascript">
 	var app = angular.module('chat',[]);
 	app.controller('ChatController',['$scope',function($scope){
+		//global config
+		$scope.config = {};
+		$scope.config.title="┈━═☆BAT 聊天室 ≧ω≦";
+		$scope.config.bg_img = 'http://wiebo.sinaapp.com/assets/images/footer.png';
 
-		$scope.title = "test";
-		$scope.buttonText = "登录";
 
-		$scope.user = {'name':''};
+
+		$scope.user = {};
+		$user = $scope.user;
+
+		$user.name = 'rr';
+
 
 		$scope.socket = {
 			'open':false
 		}
-		$scope.newUser = '';
+
+		$scope.new_user = '';
 		$scope.user_list = [];
+
+
 		$scope.submit = function(){
+
+			console.log($user.name);
 
 			var socket = new WebSocket('ws://localhost:9503'); 
 			$scope.buttonText="连接中...";
@@ -68,16 +201,21 @@
 
 				$scope.socket.open = true;
 				$scope.$apply()
+				console.log($user.name);
+				// login
+				var request = {'cmd':'login','data':{'username':$user.name}};
+				console.log(request);
+				socket.send(JSON.stringify(request)); 
 
-				// 发送一个初始化消息
-				socket.send(JSON.stringify({'login':$scope.user.name})); 
 				// 监听消息
 				socket.onmessage = function(event) { 
-					var data = JSON.parse(event.data)
-					 console.log(data);
-					switch (Object.keys(data)[0]){
-						case "new_user":							
-							$scope.newUser = data.new_user.name;
+					var response = JSON.parse(event.data)
+					var cmd  = response['cmd'];
+					var data = response['data'];
+					switch (cmd){
+						// new user login
+						case "login":							
+							$scope.new_user  = data.new_user.name;
 							$scope.user_list = data.user_list;
 							$scope.$apply();
 							break;
