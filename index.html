@@ -65,8 +65,8 @@
   	<div class="container">
 
   	<!--login-->
-      <form class="form-signin"  ng-show='!socket.open'>
-        <input type="email" ng-model="user.name" class="form-control" placeholder="请输入昵称:" required autofocus>
+      <form class="form-signin"  ng-show='!socket.open' >
+        <input type="text" ng-model="user.name" class="form-control" placeholder="请输入昵称:" required autofocus>
         <br/>
         <button class="btn btn-primary center-block " type="submit" ng-click="submit()">login</button>
       </form>
@@ -77,16 +77,13 @@
 	    	<marquee>欢迎进入{{config.title}}</marquee>
 		</p>
 		<p class="notice">
-			<i class="fa fa-bullhorn"> :</i> <span class="text-success">{{new_user}}</span> 进入聊天室
+			<i class="fa fa-bullhorn"> :</i> <span class="text-success">{{current_user}}</span> 进入聊天室
 		</p>
 		<div class="row">
 	  		<div class="col-md-2 left_user_list" >
 	  			<p><i class="fa fa-user"></i> 在线用户({{3}})</p>
 	  			<ul>
-	  				<li>胡架构</li>
-	  				<li>王铁华</li>
-	  				<li>小贺</li>
-	  				<li ng-repeat='user in user_list'>{{user}}</li>
+	  				<li ng-repeat="(uid,uname) in user_list">{{uname}}</li>
 	  			</ul>
 	  		</div>
 	    	<div class="col-md-10">
@@ -134,7 +131,7 @@
 					<hr/>
 					对 
 					<select>
-						<option ng-repeat="user in user_list " value="{{user.id}}">{{user.name}}</option>
+						<option ng-repeat="(uid,uname) in user_list" value="{{uid}}">{{uname}}</option>
 						<option>All</option>
 						<option>王铁华</option>
 						<option>小贺</option>
@@ -179,21 +176,20 @@
 
 		$scope.user = {};
 		$user = $scope.user;
-
-		$user.name = 'rr';
+		$user.name = '';
 
 
 		$scope.socket = {
 			'open':false
 		}
 
-		$scope.new_user = '';
+		$scope.current_user = '';
 		$scope.user_list = [];
-
+		console.log($scope.user.name);
 
 		$scope.submit = function(){
 
-			console.log($user.name);
+			console.log(this);
 
 			var socket = new WebSocket('ws://localhost:9503'); 
 			$scope.buttonText="连接中...";
@@ -201,22 +197,25 @@
 
 				$scope.socket.open = true;
 				$scope.$apply()
-				console.log($user.name);
+				console.log($scope.user.name);
 				// login
 				var request = {'cmd':'login','data':{'username':$user.name}};
-				console.log(request);
+				// console.log(request);
 				socket.send(JSON.stringify(request)); 
 
 				// 监听消息
 				socket.onmessage = function(event) { 
-					var response = JSON.parse(event.data)
+					var response = JSON.parse(event.data);
+
 					var cmd  = response['cmd'];
 					var data = response['data'];
 					switch (cmd){
 						// new user login
-						case "login":							
-							$scope.new_user  = data.new_user.name;
-							$scope.user_list = data.user_list;
+						case "login":	
+							console.log(data);				
+							$scope.current_user = data.user;
+							$scope.user_list 	= data.user_list;
+							console.log(data.user_list);
 							$scope.$apply();
 							break;
 						case 'new_msg':

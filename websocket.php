@@ -1,4 +1,13 @@
 <?php
+
+function get_online_users(&$redis){
+	$user_id_list = $redis->lRange('uid_list',0,-1);	
+	foreach($user_id_list as $uid){
+		$user_list[$uid] = $redis->get('uid_'.$uid);
+	}
+	return $user_list;
+}
+
 try{
 	$serv	= new swoole_websocket_server("127.0.0.1", 9503);
 	$redis	= new Redis();
@@ -22,7 +31,7 @@ try{
 			switch($cmd){
 				case 'login':
 					$uid = 'uid_'.$frame->fd;
-					$redis->lpush('uid_list',$uid);
+					$redis->lpush('uid_list',$frame->fd);
 					$username = $data['username'];
 					$redis->set($uid,$username);
 					
@@ -31,11 +40,11 @@ try{
 					$response = [
 						'cmd' =>'login',
 						'data'=> [
-							'new_user'  => $username,
+							'user'  => $username,
 							'user_list' => $user_list
 						]
 					];
-					$response_data = json_encode($response_data);
+					$response_data = json_encode($response);
 					//通知新用户登录
 					foreach($serv->connections as $fd){
 						$serv->push($fd, $response_data);
@@ -50,18 +59,31 @@ try{
 			});
 
 	$serv->on('Close', function($server, $fd) {
-	//		global $user;
-			//unset($user[$fd]);
-			echo "connection close: ".$fd."\n";
-			});
+		//log out
+		global $redis;
+		$username = $redis->get('uid_'.$fd);	
+		$redis->lRem('uid_list',$fd,1);
+		$redis->delete('uid_',$fd);
+		$user_list = get_online_users($redis);
+
+		$response = [ 
+			'cmd' =>'logout',
+			'data'=> [
+				'user'  => $username,
+				'user_list' => $user_list
+			]   
+		];  
+		$response_data = json_encode($response);
+		//通知新用户登录
+		foreach($serv->connections as $fd){
+			$serv->push($fd, $response_data);
+		}   
+
+	});
 
 	$serv->start();
 
-	function get_online_users(&$redis){
-		$user_id_list = $redis->lRange('uid_list',0,-1);	
-		$user_list = $redis->$redis->getMultiple($user_id_list);
-		return $user_list;
-	}
+	
 } catch (Exception $e){
 	print_r($e);
 }
