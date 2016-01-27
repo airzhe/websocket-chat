@@ -8,7 +8,7 @@
 </head>
 <style type="text/css">
 	body{
-		background: url({{config.bg_img}});
+		
 	}
 	#msg_content{margin-top:10px; opacity: .8;}
 	.form-signin{    
@@ -58,17 +58,23 @@
 	body{
 		/*background: #000;*/
 	}
+	[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  		display: none !important;
+	}
+	.timestamp{
+		color:#ccc;
+	}
 </style>
-<body>
+<body ng-style="{'background-image':'url(' + config.bg_img +')'}">
 
 
-  	<div class="container">
+  	<div class="container ng-cloak" ng-cloak>
 
   	<!--login-->
-      <form class="form-signin"  ng-show='!socket.open' >
-        <input type="text" ng-model="user.name" class="form-control" placeholder="请输入昵称:" required autofocus>
+      <form class="form-signin"  ng-show='!socket.open'  name="formLogin">
+        <input type="text" ng-model="user.name" class="form-control" placeholder="请输入昵称:" required  ng-minlength="3" ng-maxlength="15" maxlength="15" autofocus>
         <br/>
-        <button class="btn btn-primary center-block " type="submit" ng-click="submit()">login</button>
+        <button class="btn btn-primary center-block " type="submit"  ng-disabled="!formLogin.$valid" ng-click="submit()">login</button>
       </form>
   
 	<!--chat-->
@@ -77,13 +83,17 @@
 	    	<marquee>欢迎进入{{config.title}}</marquee>
 		</p>
 		<p class="notice">
-			<i class="fa fa-bullhorn"> :</i> <span class="text-success">{{current_user}}</span> 进入聊天室
+			<i class="fa fa-bullhorn"> :</i> 
+			<span ng-class="user.action=='login' ? 'text-success' : 'text-danger'">{{current_user}}</span>
+			{{user.action == 'login' ? '进入' : '离开'}}聊天室
 		</p>
+
 		<div class="row">
+
 	  		<div class="col-md-2 left_user_list" >
-	  			<p><i class="fa fa-user"></i> 在线用户({{3}})</p>
+	  			<p><i class="fa fa-user"></i> 在线用户(*)</p>
 	  			<ul>
-	  				<li ng-repeat="(uid,uname) in user_list">{{uname}}</li>
+	  				<li ng-repeat="uname in user_list" ng-if="uname != 'All'" ng-class="uname == user.name ? 'text-primary' :'' ">{{uname}}</li>
 	  			</ul>
 	  		</div>
 	    	<div class="col-md-10">
@@ -91,63 +101,42 @@
 					<h4><i class="fa fa-commenting-o"></i> 公屏聊天</h4>
 					<hr/>
 					<ul>
-						<li ng-repeat='item in msg'>
-							{{item.name}} 说 :{{item.content}} -- {{item.time}}
+						<li ng-repeat='item in all_msg_list'>
+							 <span class="user_name">{{item.username}}</span> 说 :<span ng-style="{'font-size':item.font_size+'px','color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
-						<li>
-										<span class="user_name">王铁华王铁华王铁华</span>  对&nbsp;&nbsp;所有人&nbsp;&nbsp;说 :&nbsp;&nbsp;<span style="color:red;font-size:32px;">我特么不是人</span>
-						</li>
-						<li>
-							<span class="user_name">王铁华王铁华王铁华</span>  对&nbsp;&nbsp;所有人&nbsp;&nbsp;说 :&nbsp;&nbsp;<span style="color:red;font-size:32px;">我特么不是人</span>
-						</li>
-						<li>
-							<span class="user_name">王铁华</span>  对&nbsp;&nbsp;所有人&nbsp;&nbsp;说 :&nbsp;&nbsp;我特么不是人
-						</li>
+
 					</ul>
 					
 				</div>
-				<div class="mt_100">
+				<div class="mt_100" ng-show="my_msg_list[0]">
 					<h4><i class="fa fa-comment-o"></i> 私聊</h4>
 					<hr/>
 					<ul>
-						<li ng-repeat='item in msg'>
-							{{item.name}} 说 :{{item.content}} -- {{item.time}}
-						</li>
-						<li>
-							王铁华 对 所有人 说 :我特么不是人
-						</li>
-						<li>
-							王铁华 对 所有人 说 :我特么不是人
-						</li>
-						<li>
-							王铁华 对 所有人 说 :我特么不是人
+						<li ng-repeat='item in my_msg_list'>
+							<span class="user_name">{{item.username}}</span> 对你 说 :{{item.content}} <span class="timestamp">({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
 					</ul>
 				</div>
+
 				<!--sed msg-->
 				<div class="mt_80">
-				<form>
-					
-					<hr/>
+				<form name="formMsg">
 					对 
-					<select>
-						<option ng-repeat="(uid,uname) in user_list" value="{{uid}}">{{uname}}</option>
-						<option>All</option>
-						<option>王铁华</option>
-						<option>小贺</option>
+					<select ng-model="msg.send_to">
+						<option ng-repeat="(uid,uname) in user_list" value="{{uid}}" ng-if="uname != user.name"  ng-selected="uid == 0">{{uname}}</option>
 					</select>
-					<input type="color" ng-model="msg.name"/>
-					<select>
-						<option>字号</option>
-						<option>14</option>
-						<option>20</option>
-						<option>26</option>
-						<option>32</option>
+					<input type="color" ng-model="msg.color"/>
+					<select ng-model="msg.font_size">
+						<option ng-selected="true">字号</option>
+						<option value="14">14</option>
+						<option value="20">20</option>
+						<option value="26">26</option>
+						<option value="32">32</option>
 					</select>
-					<textarea type="text" ng-model="msg.content" id="msg_content" class="form-control" placeholder="请输入聊天内容" required/>
+					<textarea type="text" ng-model="msg.content" id="msg_content" class="form-control" placeholder="请输入聊天内容" required ng-minlength="3" ng-maxlength="120"  maxlength="120"/>
 					</textarea>
 					<br/>
-					<button ng-click="send()" class="btn btn-default center-block btn-send">发送</button>
+					<button ng-click="send()" class="btn btn-default center-block btn-send"  ng-disabled="!formMsg.$valid" >发送</button>
 				</form>
 			</div>
     	</div>
@@ -156,23 +145,24 @@
     	<details>
 			<summary><i class="fa fa-cogs"></i></summary>
 			<br/>
-			聊天室背景图 <input type="text" class="w7" ng-model="bg_img">
-			<button>保存</button>
+			聊天室背景图 <input type="text" class="w7" ng-model="config.bg_img">
+			<button ng-click="setconfig()">保存</button>
 		</details>
     </div>
 	</div>
     </div>
 </body>
-<script type="text/javascript" src="http://cdn.bootcss.com/angular.js/1.4.0/angular.min.js"></script>
+<script type="text/javascript" src="http://cdn.bootcss.com/angular.js/1.4.9/angular.js"></script>
 <script type="text/javascript">
 	var app = angular.module('chat',[]);
 	app.controller('ChatController',['$scope',function($scope){
 		//global config
 		$scope.config = {};
-		$scope.config.title="┈━═☆BAT 聊天室 ≧ω≦";
-		$scope.config.bg_img = 'http://wiebo.sinaapp.com/assets/images/footer.png';
+		$config = $scope.config;
+		$config.title="┈━═☆BAT 聊天室 ≧ω≦";
+		$config.bg_img = 'http://wiebo.sinaapp.com/assets/images/footer.png';
 
-
+		$scope.details_flag = 'open';
 
 		$scope.user = {};
 		$user = $scope.user;
@@ -184,12 +174,31 @@
 		}
 
 		$scope.current_user = '';
-		$scope.user_list = [];
-		console.log($scope.user.name);
+		$scope.user_list = {}
+
+		$scope.msg = {};
+		$msg = $scope.msg;
+		$msg.send_to = 0;
+
+
+		$scope.new_msg = {};
+		$new_msg = $scope.new_msg = {
+			'username':'',
+			'content':'',
+			'color':'',
+			'font_size':''
+		};
+
+		$scope.all_msg_list = [];
+
+		$all_msg_list = $scope.all_msg_list;
+
+		$scope.my_msg_list = [];
+		$my_msg_list = $scope.my_msg_list;
+
 
 		$scope.submit = function(){
 
-			console.log(this);
 
 			var socket = new WebSocket('ws://localhost:9503'); 
 			$scope.buttonText="连接中...";
@@ -197,10 +206,9 @@
 
 				$scope.socket.open = true;
 				$scope.$apply()
-				console.log($scope.user.name);
+
 				// login
 				var request = {'cmd':'login','data':{'username':$user.name}};
-				// console.log(request);
 				socket.send(JSON.stringify(request)); 
 
 				// 监听消息
@@ -209,18 +217,51 @@
 
 					var cmd  = response['cmd'];
 					var data = response['data'];
+
+					console.log(cmd);
+					console.log(data);
+					var new_msg = {}
 					switch (cmd){
 						// new user login
 						case "login":	
-							console.log(data);				
-							$scope.current_user = data.user;
+							// new user;
+							$scope.current_user =  data.user;				
+							$scope.user.action 	= 'login';
+							// user list
+							data.user_list[0]   = 'All';
 							$scope.user_list 	= data.user_list;
-							console.log(data.user_list);
-							$scope.$apply();
 							break;
-						case 'new_msg':
+						case 'send_to_all':		
+							new_msg.username  = data['from'];
+							new_msg.content   = data['content'];
+							new_msg.color     = data['color'];
+							new_msg.font_size = data['font_size'];
+							new_msg.time 	  = parseInt((new Date() * 1));
+							$all_msg_list.push(new_msg);
+							console.log($all_msg_list);
 							break;
+						case 'send_to_me':
+							new_msg.username  = data['from'];
+							new_msg.content   = data['content'];
+							new_msg.color     = data['color'];
+							new_msg.font_size = data['font_size'];
+							new_msg.time 	  = parseInt((new Date() * 1));
+							$my_msg_list.push(new_msg);
+
+							console.log($my_msg_list);
+							break;
+						case 'logout':
+							$scope.current_user =  data.user;
+							$scope.user.action 	= 'logout';
+
+							data.user_list[0]   = 'All';
+							$scope.user_list 	= data.user_list;
+							break;
+						case 'setconfig':
+							$config.bg_img = data.bg_img;
+							console.log($config);
 					}
+					$scope.$apply();
 			
 				};  
 				// 监听Socket的关闭
@@ -230,6 +271,18 @@
 				// 关闭Socket.... 
 				//	socket.close() 
 				};
+				//send msg
+				$scope.send = function(){
+					$msg.from = $user.name;
+					var request = {'cmd':'send_msg','data':$msg};
+					socket.send(JSON.stringify(request)); 
+					$msg.content = '';
+				}
+				//全局配置支持设置背景图
+				$scope.setconfig = function(){
+					var request = {'cmd':'setconfig','data':$config};
+					socket.send(JSON.stringify(request)); 
+				}
 		}
 
 		$scope.send = function(){
