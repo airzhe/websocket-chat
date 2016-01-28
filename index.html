@@ -20,6 +20,7 @@
 	}
 	.welcome{
 		margin:20px 0;
+		font-size: 16px;
 	}
 	.notice{
 		padding:10px 0;
@@ -64,6 +65,10 @@
 	.timestamp{
 		color:#ccc;
 	}
+	footer{
+		margin-top:100px;
+		color:#666;
+	}
 </style>
 <body ng-style="{'background-image':'url(' + config.bg_img +')'}">
 
@@ -74,7 +79,7 @@
       <form class="form-signin"  ng-show='!socket.open'  name="formLogin">
         <input type="text" ng-model="user.name" class="form-control" placeholder="请输入昵称:" required  ng-minlength="3" ng-maxlength="15" maxlength="15" autofocus>
         <br/>
-        <button class="btn btn-primary center-block " type="submit"  ng-disabled="!formLogin.$valid" ng-click="submit()">login</button>
+        <button class="btn btn-primary center-block"  type="submit"  id="btnLogin" ng-disabled="!formLogin.$valid" ng-click="submit()">login</button>
       </form>
   
 	<!--chat-->
@@ -102,7 +107,7 @@
 					<hr/>
 					<ul>
 						<li ng-repeat='item in all_msg_list'>
-							 <span class="user_name">{{item.username}}</span> 说 :<span ng-style="{'font-size':item.font_size+'px','color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">({{item.time | date:'HH:mm:ss'}} )</span>
+							 <span class="user_name" ng-style="{'color':item.color?item.color:''}" >{{item.from}}</span> 说 :&nbsp; <span ng-style="{'font-size':item.font_size+'px','color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
 
 					</ul>
@@ -113,7 +118,7 @@
 					<hr/>
 					<ul>
 						<li ng-repeat='item in my_msg_list'>
-							<span class="user_name">{{item.username}}</span> 对你 说 :{{item.content}} <span class="timestamp">({{item.time | date:'HH:mm:ss'}} )</span>
+							<span ng-style="{'color':item.color?item.color:''}">{{item.from ? item.from : '我'}}</span> &nbsp;对&nbsp;{{item.to ? item.to :'我'}}&nbsp; 说 :&nbsp; <span ng-style="{'color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
 					</ul>
 				</div>
@@ -141,7 +146,7 @@
 			</div>
     	</div>
     </div>
-    <div class="mt_80">
+    <div class="mt_80" ng-if='flase'>
     	<details>
 			<summary><i class="fa fa-cogs"></i></summary>
 			<br/>
@@ -150,17 +155,25 @@
 		</details>
     </div>
 	</div>
-    </div>
+	
+	<footer>
+		<hr/>
+        <p>© 使用angular js + bootstrap + swoole + redis开发的聊天室 v1.0</p>
+     </footer>
+	</div>
+    
 </body>
 <script type="text/javascript" src="http://cdn.bootcss.com/angular.js/1.4.9/angular.js"></script>
 <script type="text/javascript">
+
+
 	var app = angular.module('chat',[]);
 	app.controller('ChatController',['$scope',function($scope){
 		//global config
 		$scope.config = {};
 		$config = $scope.config;
-		$config.title="┈━═☆BAT 聊天室 ≧ω≦";
-		$config.bg_img = 'http://wiebo.sinaapp.com/assets/images/footer.png';
+		$config.title="┈━═☆ e网情深 聊天室 ☆═━┈";
+		$config.bg_img = '';//http://wiebo.sinaapp.com/assets/images/footer.png
 
 		$scope.details_flag = 'open';
 
@@ -196,9 +209,19 @@
 		$scope.my_msg_list = [];
 		$my_msg_list = $scope.my_msg_list;
 
+		if(localStorage.username){
+			$user.name = localStorage.username;
+			setTimeout(function(){
+				document.getElementById('btnLogin').click();
+			},1)
+			
+		}
 
-		$scope.submit = function(){
+		$scope.submit = function(username){
 
+			if(!username){
+				localStorage.username = $user.name;
+			}
 
 			var socket = new WebSocket('ws://localhost:9503'); 
 			$scope.buttonText="连接中...";
@@ -222,6 +245,8 @@
 					console.log(data);
 					var new_msg = {}
 					switch (cmd){
+						//send_to:0 all 
+						//from:0    me
 						// new user login
 						case "login":	
 							// new user;
@@ -232,22 +257,34 @@
 							$scope.user_list 	= data.user_list;
 							break;
 						case 'send_to_all':		
-							new_msg.username  = data['from'];
+							new_msg.from  	  = data['from'];
 							new_msg.content   = data['content'];
-							new_msg.color     = data['color'];
 							new_msg.font_size = data['font_size'];
+							new_msg.color     = data['color'];
 							new_msg.time 	  = parseInt((new Date() * 1));
 							$all_msg_list.push(new_msg);
 							console.log($all_msg_list);
 							break;
 						case 'send_to_me':
-							new_msg.username  = data['from'];
+							new_msg.from  	  = data['from'];
+							new_msg.to        = 0;
 							new_msg.content   = data['content'];
-							new_msg.color     = data['color'];
 							new_msg.font_size = data['font_size'];
+							new_msg.color     = data['color'];
 							new_msg.time 	  = parseInt((new Date() * 1));
 							$my_msg_list.push(new_msg);
-
+							// chrome notice
+							if (Notification.permission !== "granted"){
+						    	Notification.requestPermission();
+							} else {
+							    var notification = new Notification(new_msg.from, {
+							      icon: 'http://pub.idqqimg.com/smartqq/css/image/tab_icon_conversation.png',
+							      body: new_msg.content,
+							    });
+							    setTimeout(function(){
+							    	notification.close();
+							    }, 3000);
+						  	}
 							console.log($my_msg_list);
 							break;
 						case 'logout':
@@ -273,6 +310,18 @@
 				};
 				//send msg
 				$scope.send = function(){
+					if($msg.send_to){
+						var new_msg = {}
+						new_msg.from  	  = 0;
+						new_msg.to        = $scope.user_list[$msg.send_to];
+						new_msg.content   = $msg.content;
+						new_msg.font_size = $msg.color;
+						new_msg.color     = $msg.color;
+						new_msg.time 	  = parseInt((new Date() * 1));
+						console.log(new_msg);
+						$my_msg_list.push(new_msg);
+						}
+
 					$msg.from = $user.name;
 					var request = {'cmd':'send_msg','data':$msg};
 					socket.send(JSON.stringify(request)); 
