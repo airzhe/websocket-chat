@@ -146,8 +146,8 @@
 						<option value="26">26</option>
 						<option value="32">32</option>
 					</select>
-					<textarea type="text" ng-model="msg.content" id="msg_content" class="form-control" placeholder="请输入聊天内容" required ng-maxlength="120"  maxlength="120"/>
-					</textarea>
+					<input type="text" ng-model="msg.content" id="msg_content" class="form-control" style="padding:15px 20px 50px 10px" placeholder="请输入聊天内容" required ng-maxlength="120"  maxlength="120"/>
+			
 					<br/>
 					<button ng-click="send()" class="btn btn-default center-block btn-send"  ng-disabled="!formMsg.$valid" >发送</button>
 				</form>
