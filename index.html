@@ -53,6 +53,9 @@
 	.mt_80{
 		margin-top:80px;
 	}
+	.mt_60{
+		margin-top:60px;
+	}
 	.w7{
 		width: 70%;
 	}
@@ -108,9 +111,9 @@
 	  		</div>
 	    	<div class="col-md-10">
 	    		<div>
-					<h4><i class="fa fa-commenting-o"></i> 公屏聊天</h4>
+					<h4 title="点击隐藏" ng-click="all_chat_show = !all_chat_show"><i class="fa fa-commenting-o"></i> 公屏聊天</h4>
 					<hr/>
-					<ul>
+					<ul ng-show="!all_chat_show">
 						<li ng-repeat='item in all_msg_list'>
 							 <span class="user_name" ng-style="{'color':item.color?item.color:''}" >{{item.from}}</span> <span class="say">说</span> :&nbsp; <span ng-style="{'font-size':item.font_size+'px','color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
@@ -118,10 +121,10 @@
 					</ul>
 					
 				</div>
-				<div class="mt_100" ng-show="my_msg_list[0]">
-					<h4><i class="fa fa-comment-o"></i> 私聊</h4>
+				<div class="mt_60" ng-show="my_msg_list[0]">
+					<h4  title="点击隐藏" ng-click="my_chat_show = !my_chat_show"><i class="fa fa-comment-o"></i> 私聊</h4>
 					<hr/>
-					<ul>
+					<ul ng-show="!my_chat_show">
 						<li ng-repeat='item in my_msg_list'>
 							<span ng-style="{'color':item.color?item.color:''}">{{item.from ? item.from : '我'}}</span> &nbsp;对&nbsp;{{item.to ? item.to :'我'}}&nbsp; <span class="say">说</span> :&nbsp; <span ng-style="{'color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
