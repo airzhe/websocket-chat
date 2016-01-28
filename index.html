@@ -39,10 +39,13 @@
 		 width: 100px;
 		 overflow: hidden;
     	 white-space: nowrap;
+    	 display: inline-block;
+    	 vertical-align:top;
 	}
 	li{
 		line-height: 25px;
-		 display: flex;
+		list-style: none;
+		 /*display: flex;*/
 	}
 	.mt_100{
 		margin-top:100px;
@@ -65,13 +68,15 @@
 	.timestamp{
 		color:#ccc;
 	}
+	.say{
+		color:#666;
+	}
 	footer{
 		margin-top:100px;
-		color:#666;
+		color:#999;
 	}
 </style>
 <body ng-style="{'background-image':'url(' + config.bg_img +')'}">
-
 
   	<div class="container ng-cloak" ng-cloak>
 
@@ -107,7 +112,7 @@
 					<hr/>
 					<ul>
 						<li ng-repeat='item in all_msg_list'>
-							 <span class="user_name" ng-style="{'color':item.color?item.color:''}" >{{item.from}}</span> 说 :&nbsp; <span ng-style="{'font-size':item.font_size+'px','color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
+							 <span class="user_name" ng-style="{'color':item.color?item.color:''}" >{{item.from}}</span> <span class="say">说</span> :&nbsp; <span ng-style="{'font-size':item.font_size+'px','color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
 
 					</ul>
@@ -118,7 +123,7 @@
 					<hr/>
 					<ul>
 						<li ng-repeat='item in my_msg_list'>
-							<span ng-style="{'color':item.color?item.color:''}">{{item.from ? item.from : '我'}}</span> &nbsp;对&nbsp;{{item.to ? item.to :'我'}}&nbsp; 说 :&nbsp; <span ng-style="{'color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
+							<span ng-style="{'color':item.color?item.color:''}">{{item.from ? item.from : '我'}}</span> &nbsp;对&nbsp;{{item.to ? item.to :'我'}}&nbsp; <span class="say">说</span> :&nbsp; <span ng-style="{'color':item.color?item.color:''}">{{item.content}}</span> <span class="timestamp">&nbsp;({{item.time | date:'HH:mm:ss'}} )</span>
 						</li>
 					</ul>
 				</div>
@@ -138,7 +143,7 @@
 						<option value="26">26</option>
 						<option value="32">32</option>
 					</select>
-					<textarea type="text" ng-model="msg.content" id="msg_content" class="form-control" placeholder="请输入聊天内容" required ng-minlength="3" ng-maxlength="120"  maxlength="120"/>
+					<textarea type="text" ng-model="msg.content" id="msg_content" class="form-control" placeholder="请输入聊天内容" required ng-maxlength="120"  maxlength="120"/>
 					</textarea>
 					<br/>
 					<button ng-click="send()" class="btn btn-default center-block btn-send"  ng-disabled="!formMsg.$valid" >发送</button>
@@ -156,7 +161,7 @@
     </div>
 	</div>
 	
-	<footer>
+	<footer class="text-center">
 		<hr/>
         <p>© 使用angular js + bootstrap + swoole + redis开发的聊天室 v1.0</p>
      </footer>
@@ -209,19 +214,19 @@
 		$scope.my_msg_list = [];
 		$my_msg_list = $scope.my_msg_list;
 
-		if(localStorage.username){
-			$user.name = localStorage.username;
-			setTimeout(function(){
-				document.getElementById('btnLogin').click();
-			},1)
+		// if(localStorage.username){
+		// 	$user.name = localStorage.username;
+		// 	setTimeout(function(){
+		// 		document.getElementById('btnLogin').click();
+		// 	},1)
 			
-		}
+		// }
 
 		$scope.submit = function(username){
 
-			if(!username){
-				localStorage.username = $user.name;
-			}
+			// if(!username){
+			// 	localStorage.username = $user.name;
+			// }
 
 			var socket = new WebSocket('ws://localhost:9503'); 
 			$scope.buttonText="连接中...";
@@ -262,6 +267,9 @@
 							new_msg.font_size = data['font_size'];
 							new_msg.color     = data['color'];
 							new_msg.time 	  = parseInt((new Date() * 1));
+							if($all_msg_list.length >= 20){
+								$all_msg_list.shift();
+							}
 							$all_msg_list.push(new_msg);
 							console.log($all_msg_list);
 							break;
@@ -272,6 +280,9 @@
 							new_msg.font_size = data['font_size'];
 							new_msg.color     = data['color'];
 							new_msg.time 	  = parseInt((new Date() * 1));
+							if($my_msg_list.length >= 20){
+								$my_msg_list.shift();
+							}
 							$my_msg_list.push(new_msg);
 							// chrome notice
 							if (Notification.permission !== "granted"){
@@ -310,7 +321,7 @@
 				};
 				//send msg
 				$scope.send = function(){
-					if($msg.send_to){
+					if($msg.send_to != 0){
 						var new_msg = {}
 						new_msg.from  	  = 0;
 						new_msg.to        = $scope.user_list[$msg.send_to];
@@ -319,8 +330,11 @@
 						new_msg.color     = $msg.color;
 						new_msg.time 	  = parseInt((new Date() * 1));
 						console.log(new_msg);
-						$my_msg_list.push(new_msg);
+						if($my_msg_list.length >= 20){
+							$my_msg_list.shift();
 						}
+						$my_msg_list.push(new_msg);
+					}
 
 					$msg.from = $user.name;
 					var request = {'cmd':'send_msg','data':$msg};

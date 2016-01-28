@@ -67,8 +67,8 @@ try{
 					$username	= $data['from'];
 					$send_to	= $data['send_to'];
 					$content	= $data['content'];
-					$color		= $data['color'];
-					$font_size	= $data['font_size'];
+					$color		= $data['color'] ?? '';
+					$font_size	= $data['font_size'] ?? ''; 
 
 					$response = [
 						'data' => [
